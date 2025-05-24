@@ -6,12 +6,12 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "NIPCO UYO 1-002 - Fuel Station Management",
+  title: "NIPCO ABK-001 - Fuel Station Management",
   description: "Modern fuel station management system",
   icons: {
     icon: "/favicon.png",
   },
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({

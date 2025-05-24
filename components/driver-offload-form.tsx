@@ -88,7 +88,7 @@ export function DriverOffloadForm({ open, onClose, onSubmit }: DriverOffloadForm
     // Header
     doc.setFontSize(20)
     doc.setTextColor(0, 0, 0)
-    doc.text("NIPCO UYO 1-002", 105, 20, { align: "center" })
+    doc.text("NIPCO ABK-001", 105, 20, { align: "center" })
 
     doc.setFontSize(14)
     doc.text("Driver Offload Record", 105, 30, { align: "center" })
@@ -435,7 +435,7 @@ export function DriverOffloadForm({ open, onClose, onSubmit }: DriverOffloadForm
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  className="px-8 py-3 bg-gradient-to-r from-lime-400 to-lime-500 text-black hover:from-lime-500 hover:to-lime-600 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-lime-400/25"
+                  className="px-8 py-3 bg-gradient-to-r from-blue-400 to-blue-500 text-black hover:from-blue-500 hover:to-blue-600 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-blue-400/25"
                   disabled={!formData.purchaseOrder || !formData.driverName || !formData.volumeArrived}
                 >
                   <Save className="h-4 w-4 mr-2" />

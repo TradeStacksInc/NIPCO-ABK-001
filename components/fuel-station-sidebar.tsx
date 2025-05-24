@@ -77,12 +77,12 @@ export function FuelStationSidebar({
     <Sidebar className="sidebar-modern">
       <SidebarHeader className="border-b border-gray-800/50 p-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-lime-400 to-lime-500 text-black shadow-lg animate-pulse-glow">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 text-black shadow-lg animate-pulse-glow">
             <Fuel className="h-7 w-7" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold text-lime-400">NIPCO</span>
-            <span className="text-xs text-lime-300 font-medium">UYO 1-002</span>
+            <span className="text-xl font-bold text-blue-400">NIPCO</span>
+            <span className="text-xs text-blue-300 font-medium">ABK-001</span>
           </div>
         </div>
       </SidebarHeader>
@@ -97,13 +97,13 @@ export function FuelStationSidebar({
                     isActive={item.isActive}
                     className={`sidebar-item transition-all duration-300 rounded-2xl h-12 font-medium cursor-pointer ${
                       item.isActive
-                        ? "bg-lime-400 text-black hover:bg-lime-500"
+                        ? "bg-blue-400 text-black hover:bg-blue-500"
                         : "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50"
                     }`}
                     onClick={item.onClick}
                   >
                     <div className="flex items-center gap-4 rounded-2xl px-4 py-3 w-full">
-                      <div className={`p-2 rounded-xl ${item.isActive ? "bg-lime-600/30" : "bg-gray-700/50"}`}>
+                      <div className={`p-2 rounded-xl ${item.isActive ? "bg-blue-600/30" : "bg-gray-700/50"}`}>
                         <item.icon className="h-5 w-5" />
                       </div>
                       <span className="font-medium">{item.title}</span>

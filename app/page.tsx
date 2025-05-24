@@ -462,7 +462,7 @@ export default function Dashboard() {
                     {/* Mobile-optimized Horizontal Pipe Gauge */}
                     <div className="pipe-gauge mobile-pipe-gauge md:h-12 rounded-xl md:rounded-2xl relative overflow-hidden">
                       <div
-                        className="pipe-fill h-full rounded-xl md:rounded-2xl transition-all duration-1000 ease-out bg-gradient-to-r from-lime-400 to-lime-500"
+                        className="pipe-fill h-full rounded-xl md:rounded-2xl transition-all duration-1000 ease-out bg-gradient-to-r from-blue-400 to-blue-500"
                         style={{ width: `${revenuePercentage}%` }}
                       ></div>
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -478,7 +478,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm">
                       <div className="text-center">
                         <p className="text-gray-400">Current</p>
-                        <p className="text-lime-400 font-semibold text-xs md:text-base">
+                        <p className="text-blue-400 font-semibold text-xs md:text-base">
                           NGN {currentRevenue.toLocaleString()}
                         </p>
                       </div>
@@ -559,9 +559,9 @@ export default function Dashboard() {
               <Card className="glass-card glass-card-hover rounded-2xl md:rounded-3xl border-gray-700/50">
                 <CardHeader className="mobile-card-spacing md:pb-6">
                   <div className="mobile-card-header md:flex-row md:items-center md:justify-between">
-                    <CardTitle className="mobile-card-title md:text-xl flex items-center gap-2 md:gap-3 text-green-400">
-                      <div className="p-1.5 md:p-2 bg-green-400/10 rounded-lg md:rounded-xl">
-                        <span className="text-xs md:text-sm bg-green-400/20 px-2 py-1 rounded-md border border-green-400/30 text-green-400">
+                    <CardTitle className="mobile-card-title md:text-xl flex items-center gap-2 md:gap-3 text-blue-400">
+                      <div className="p-1.5 md:p-2 bg-blue-400/10 rounded-lg md:rounded-xl">
+                        <span className="text-xs md:text-sm bg-blue-400/20 px-2 py-1 rounded-md border border-blue-400/30 text-blue-400">
                           NGN
                         </span>
                       </div>
@@ -600,16 +600,16 @@ export default function Dashboard() {
                           NGN {realtimeRevenue.morning.toLocaleString()}
                         </p>
                       </div>
-                      <div className="p-3 md:p-4 bg-gradient-to-br from-orange-400/5 to-orange-400/10 rounded-xl md:rounded-2xl border border-orange-400/20">
+                      <div className="p-3 md:p-4 bg-gradient-to-br from-blue-400/5 to-blue-400/10 rounded-xl md:rounded-2xl border border-blue-400/20">
                         <span className="text-gray-300 text-xs md:text-sm">Afternoon Shift</span>
-                        <p className="font-bold text-sm md:text-lg text-orange-400">
+                        <p className="font-bold text-sm md:text-lg text-blue-400">
                           NGN {realtimeRevenue.afternoon.toLocaleString()}
                         </p>
                       </div>
                     </div>
                     <div className="flex justify-between items-center text-xs md:text-sm pt-3 md:pt-4 border-t border-gray-700/50">
                       <span className="text-gray-400">Profit Margin</span>
-                      <span className="text-green-400 font-semibold">{getRevenueData().margin}%</span>
+                      <span className="text-blue-400 font-semibold">{getRevenueData().margin}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -631,14 +631,14 @@ export default function Dashboard() {
                       <Button
                         variant="outline"
                         onClick={() => setShowTotalSalesModal(true)}
-                        className="mobile-btn bg-lime-500 text-black border-lime-500 hover:bg-lime-600 hover:border-lime-600 rounded-xl font-semibold"
+                        className="mobile-btn bg-blue-500 text-black border-blue-500 hover:bg-blue-600 hover:border-blue-600 rounded-xl font-semibold"
                       >
                         <Calculator className="h-4 w-4 mr-2 text-black" />
                         <span className="hidden sm:inline">Total Sales</span>
                         <span className="sm:hidden">Total</span>
                       </Button>
                       <Button
-                        className="mobile-btn bg-lime-400 text-black hover:bg-lime-500 rounded-xl font-semibold"
+                        className="mobile-btn bg-gray-400 text-black hover:bg-gray-500 rounded-xl font-semibold"
                         onClick={() => setShowSalesForm(true)}
                       >
                         <Plus className="h-4 w-4 mr-2 text-black" />
@@ -813,7 +813,7 @@ export default function Dashboard() {
                             onClick={() => setCurrentPage(page)}
                             className={
                               currentPage === page
-                                ? "bg-gradient-to-r from-lime-400 to-lime-500 text-black hover:from-lime-500 hover:to-lime-600 rounded-xl min-w-[32px]"
+                                ? "bg-gradient-to-r from-blue-400 to-blue-500 text-black hover:from-blue-500 hover:to-blue-600 rounded-xl min-w-[32px]"
                                 : "text-gray-400 hover:text-white rounded-xl min-w-[32px]"
                             }
                           >
@@ -859,7 +859,7 @@ export default function Dashboard() {
           <Separator orientation="vertical" className="mr-2 h-4 md:h-6 bg-gray-700/50" />
           <div className="flex flex-1 items-center justify-between">
             <div>
-              <h1 className="mobile-title md:text-2xl font-bold text-lime-400">NIPCO UYO 1-002</h1>
+              <h1 className="mobile-title md:text-2xl font-bold text-blue-400">NIPCO ABK-001</h1>
               <p className="mobile-subtitle md:text-sm text-gray-400 font-medium hidden sm:block">
                 Enterprise Fuel Management System
               </p>
@@ -869,10 +869,10 @@ export default function Dashboard() {
                 variant="ghost"
                 size="icon"
                 onClick={handleNotificationsClick}
-                className="touch-target text-gray-400 hover:text-lime-400 hover:bg-lime-400/10 relative rounded-xl transition-all duration-300 animate-pulse-glow"
+                className="touch-target text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 relative rounded-xl transition-all duration-300 animate-pulse-glow"
               >
                 <Bell className="h-4 w-4 md:h-5 md:w-5" />
-                <span className="absolute -top-1 -right-1 h-2 w-2 md:h-3 md:w-3 bg-gradient-to-r from-lime-500 to-lime-400 rounded-full animate-pulse"></span>
+                <span className="absolute -top-1 -right-1 h-2 w-2 md:h-3 md:w-3 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full animate-pulse"></span>
               </Button>
               <Button
                 variant="ghost"

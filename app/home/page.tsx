@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Fuel, Users, Shield, BarChart3, ChevronRight, MapPin, Clock, Crown } from "lucide-react"
+import { Fuel, Users, ChevronRight, MapPin, Clock, Crown } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -168,7 +168,7 @@ export default function HomePage() {
     }, 1000)
   }
 
-  const getColorClasses = (color: string) => {
+  const getColorClasses = (color: string, isActive: boolean) => {
     const colorMap: { [key: string]: string } = {
       blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30 hover:border-blue-400/50",
       teal: "from-teal-500/20 to-teal-600/20 border-teal-500/30 hover:border-teal-400/50",
@@ -181,7 +181,21 @@ export default function HomePage() {
       cyan: "from-cyan-500/20 to-cyan-600/20 border-cyan-500/30 hover:border-cyan-400/50",
       yellow: "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 hover:border-yellow-400/50",
     }
-    return colorMap[color] || colorMap.blue
+
+    const greyMap: { [key: string]: string } = {
+      blue: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      teal: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      green: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      purple: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      orange: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      red: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      indigo: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      pink: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      cyan: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+      yellow: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
+    }
+
+    return isActive ? colorMap[color] || colorMap.blue : greyMap[color] || greyMap.blue
   }
 
   const getStatusColor = (status: string) => {
@@ -229,65 +243,6 @@ export default function HomePage() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="glass-card border-gray-700/50 rounded-2xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-500/20 rounded-xl">
-                  <Fuel className="h-6 w-6 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Total Stations</p>
-                  <p className="text-2xl font-bold text-white">10</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-gray-700/50 rounded-2xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-500/20 rounded-xl">
-                  <BarChart3 className="h-6 w-6 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Active Portals</p>
-                  <p className="text-2xl font-bold text-white">{activeStations}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-gray-700/50 rounded-2xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-500/20 rounded-xl">
-                  <Users className="h-6 w-6 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Total Revenue</p>
-                  <p className="text-2xl font-bold text-white">₦{totalRevenue.toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-gray-700/50 rounded-2xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-500/20 rounded-xl">
-                  <Shield className="h-6 w-6 text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">System Status</p>
-                  <p className="text-2xl font-bold text-green-400">Online</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Portal Cards */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6">Fuel Station Portals</h2>
@@ -295,7 +250,7 @@ export default function HomePage() {
             {portalCards.map((card) => (
               <Card
                 key={card.id}
-                className={`glass-card border rounded-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 bg-gradient-to-br ${getColorClasses(card.color)} ${
+                className={`glass-card border rounded-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 bg-gradient-to-br ${getColorClasses(card.color, card.isActive)} ${
                   !card.isActive ? "opacity-60 cursor-not-allowed" : ""
                 }`}
                 onClick={() => handleCardClick(card)}
@@ -304,8 +259,8 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 bg-${card.color}-500/30 rounded-xl`}>
-                          <Fuel className={`h-5 w-5 text-${card.color}-400`} />
+                        <div className={`p-2 bg-${card.isActive ? card.color : "gray"}-500/30 rounded-xl`}>
+                          <Fuel className={`h-5 w-5 text-${card.isActive ? card.color : "gray"}-400`} />
                         </div>
                         <div>
                           <h3 className="font-semibold text-white text-lg">{card.title}</h3>
@@ -332,13 +287,7 @@ export default function HomePage() {
 
                     <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
                       <Badge className={`${getStatusColor(card.status)} text-xs`}>{card.status}</Badge>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-400">Revenue</p>
-                        <p className="font-semibold text-white">{card.revenue}</p>
-                      </div>
                     </div>
-
-                    <div className="text-xs text-gray-500">Tanks: {card.tanks}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -365,10 +314,6 @@ export default function HomePage() {
                     <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 text-xs">
                       {fleetCard.status}
                     </Badge>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-400">Vehicles</p>
-                      <p className="font-semibold text-white">0</p>
-                    </div>
                   </div>
                 </div>
               </CardContent>

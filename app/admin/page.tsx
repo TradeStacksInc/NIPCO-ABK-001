@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -17,6 +17,8 @@ import {
   Package,
   Activity,
   Building,
+  ServerCog,
+  Store,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -77,14 +79,14 @@ const stationsData = [
     revenue: 2100000,
     expectedRevenue: 2800000,
     tanks: [
-      { name: "Tank 1", fuel: "AGO", current: 9200, capacity: 10000, percentage: 92 },
+      { name: "Tank 1", fuel: "AGO", current: 1800, capacity: 10000, percentage: 18 }, // Low tank alert
       { name: "Tank 2", fuel: "PMS", current: 6700, capacity: 10000, percentage: 67 },
-      { name: "Tank 3", fuel: "AGO", current: 5800, capacity: 10000, percentage: 58 },
+      { name: "Tank 3", fuel: "AGO", current: 800, capacity: 10000, percentage: 8 }, // Critical alert
       { name: "Tank 4", fuel: "PMS", current: 8400, capacity: 10000, percentage: 84 },
     ],
     staff: 11,
     lastActivity: "8 mins ago",
-    alerts: 0,
+    alerts: 2,
   },
   {
     id: "ik-004",
@@ -99,7 +101,7 @@ const stationsData = [
       { name: "Tank 1", fuel: "AGO", current: 4500, capacity: 10000, percentage: 45 },
       { name: "Tank 2", fuel: "PMS", current: 7800, capacity: 10000, percentage: 78 },
       { name: "Tank 3", fuel: "AGO", current: 6200, capacity: 10000, percentage: 62 },
-      { name: "Tank 4", fuel: "PMS", current: 5900, capacity: 10000, percentage: 59 },
+      { name: "Tank 4", fuel: "PMS", current: 500, capacity: 10000, percentage: 5 }, // Critical alert
     ],
     staff: 9,
     lastActivity: "12 mins ago",
@@ -157,6 +159,26 @@ const mockNotifications = [
     timestamp: "1 hour ago",
     read: true,
   },
+  {
+    id: "4",
+    stationId: "uyo-2-003",
+    stationName: "NIPCO Uyo 2-003",
+    type: "tank_alert",
+    title: "🚨 Critical Tank Level",
+    message: "Tank 3 AGO at 8% - Immediate refill required!",
+    timestamp: "Just now",
+    read: false,
+  },
+  {
+    id: "5",
+    stationId: "ik-004",
+    stationName: "NIPCO Ik-004",
+    type: "tank_alert",
+    title: "🚨 Critical Tank Level",
+    message: "Tank 4 PMS at 5% - Emergency refill needed!",
+    timestamp: "2 mins ago",
+    read: false,
+  },
 ]
 
 const mockPurchaseOrders = [
@@ -193,6 +215,7 @@ export default function AdminDashboard() {
   const [selectedStation, setSelectedStation] = useState("")
   const [notifications, setNotifications] = useState(mockNotifications)
   const [purchaseOrders, setPurchaseOrders] = useState(mockPurchaseOrders)
+  const [tankAlerts, setTankAlerts] = useState<any[]>([])
   const [newPO, setNewPO] = useState({
     stationId: "",
     fuelType: "",
@@ -201,12 +224,78 @@ export default function AdminDashboard() {
     expectedDelivery: "",
   })
 
+  // Tank monitoring system
+  useEffect(() => {
+    const checkTankLevels = () => {
+      const alerts: any[] = []
+
+      stationsData.forEach((station) => {
+        station.tanks.forEach((tank) => {
+          if (tank.percentage <= 5) {
+            alerts.push({
+              id: `${station.id}-${tank.name}-critical`,
+              stationId: station.id,
+              stationName: station.name,
+              type: "tank_critical",
+              title: "🚨 CRITICAL: Tank Almost Empty",
+              message: `${tank.name} ${tank.fuel} at ${tank.percentage}% - Emergency refill required!`,
+              timestamp: "Just now",
+              read: false,
+              severity: "critical",
+            })
+          } else if (tank.percentage <= 10) {
+            alerts.push({
+              id: `${station.id}-${tank.name}-low`,
+              stationId: station.id,
+              stationName: station.name,
+              type: "tank_low",
+              title: "⚠️ LOW: Tank Level Warning",
+              message: `${tank.name} ${tank.fuel} at ${tank.percentage}% - Refill recommended`,
+              timestamp: "Just now",
+              read: false,
+              severity: "high",
+            })
+          } else if (tank.percentage <= 20) {
+            alerts.push({
+              id: `${station.id}-${tank.name}-warning`,
+              stationId: station.id,
+              stationName: station.name,
+              type: "tank_warning",
+              title: "⚡ WARNING: Tank Level Low",
+              message: `${tank.name} ${tank.fuel} at ${tank.percentage}% - Monitor closely`,
+              timestamp: "Just now",
+              read: false,
+              severity: "medium",
+            })
+          }
+        })
+      })
+
+      setTankAlerts(alerts)
+
+      // Add new alerts to notifications
+      const newAlerts = alerts.filter((alert) => !notifications.some((notif) => notif.id === alert.id))
+
+      if (newAlerts.length > 0) {
+        setNotifications((prev) => [...newAlerts, ...prev])
+      }
+    }
+
+    // Check tank levels immediately and then every 30 seconds
+    checkTankLevels()
+    const interval = setInterval(checkTankLevels, 30000)
+
+    return () => clearInterval(interval)
+  }, [notifications])
+
   // Calculate totals
   const totalRevenue = stationsData.reduce((sum, station) => sum + station.revenue, 0)
   const totalExpectedRevenue = stationsData.reduce((sum, station) => sum + station.expectedRevenue, 0)
   const totalStaff = stationsData.reduce((sum, station) => sum + station.staff, 0)
-  const totalAlerts = stationsData.reduce((sum, station) => sum + station.alerts, 0)
+  const totalAlerts = stationsData.reduce((sum, station) => sum + station.alerts, 0) + tankAlerts.length
   const revenueProgress = (totalRevenue / totalExpectedRevenue) * 100
+  const totalStations = stationsData.length
+  const activePortals = 5
 
   const handleCreatePO = () => {
     const station = stationsData.find((s) => s.id === newPO.stationId)
@@ -236,7 +325,6 @@ export default function AdminDashboard() {
     })
     setShowCreatePO(false)
 
-    // Add notification to the specific station
     const notification = {
       id: String(notifications.length + 1),
       stationId: newPO.stationId,
@@ -248,6 +336,10 @@ export default function AdminDashboard() {
       read: false,
     }
     setNotifications([notification, ...notifications])
+  }
+
+  const handleStationClick = (stationId: string) => {
+    router.push(`/admin/sales-analysis/${stationId}`)
   }
 
   const getStationColor = (color: string) => {
@@ -274,9 +366,19 @@ export default function AdminDashboard() {
     }
   }
 
+  const getTankAlertColor = (percentage: number) => {
+    if (percentage <= 5) return "border-red-500/50 bg-red-500/10"
+    if (percentage <= 10) return "border-orange-500/50 bg-orange-500/10"
+    if (percentage <= 20) return "border-yellow-500/50 bg-yellow-500/10"
+    return "border-gray-700/50 bg-gray-800/30"
+  }
+
   const filteredNotifications = selectedStation
     ? notifications.filter((n) => n.stationId === selectedStation)
     : notifications
+
+  const criticalAlerts = tankAlerts.filter((alert) => alert.severity === "critical").length
+  const unreadNotifications = notifications.filter((n) => !n.read).length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -306,20 +408,105 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <Button
+                onClick={() => router.push("/admin/managers")}
+                className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl font-semibold"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Manager Performance
+              </Button>
+              <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowNotifications(true)}
                 className="text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10 relative rounded-xl transition-all duration-300"
               >
                 <Bell className="h-5 w-5" />
-                {notifications.filter((n) => !n.read).length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center animate-pulse">
+                    {unreadNotifications}
+                  </span>
                 )}
               </Button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Critical Alerts Banner */}
+      {criticalAlerts > 0 && (
+        <div className="bg-red-500/20 border-b border-red-500/30 px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-400 animate-pulse" />
+            <span className="text-red-400 font-semibold">
+              🚨 {criticalAlerts} Critical Tank Alert{criticalAlerts > 1 ? "s" : ""} - Immediate Action Required!
+            </span>
+            <Button
+              size="sm"
+              onClick={() => setShowNotifications(true)}
+              className="bg-red-500 text-white hover:bg-red-600 ml-auto"
+            >
+              View Alerts
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Overview Cards */}
+      <div className="max-w-7xl mx-auto p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="glass-card border-gray-700/50 rounded-3xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-blue-400 text-xl">
+              <Store className="h-6 w-6 mr-2" />
+              Total Stations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-white">{totalStations}</p>
+            <p className="text-sm text-gray-400">All Stations</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card border-gray-700/50 rounded-3xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-green-400 text-xl">
+              <Activity className="h-6 w-6 mr-2" />
+              Active Portals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-white">{activePortals}</p>
+            <p className="text-sm text-gray-400">Currently Online</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card border-gray-700/50 rounded-3xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
+              <DollarSign className="h-6 w-6 mr-2" />
+              Total Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-white">₦{totalRevenue.toLocaleString()}</p>
+            <p className="text-sm text-gray-400">Combined Revenue</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card border-gray-700/50 rounded-3xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-teal-400 text-xl">
+              <ServerCog className="h-6 w-6 mr-2" />
+              System Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-white">Online</p>
+            <p className="text-sm text-gray-400">
+              {totalAlerts > 0 ? `${totalAlerts} Alert${totalAlerts > 1 ? "s" : ""}` : "Operational"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Overview Cards */}
@@ -394,6 +581,7 @@ export default function AdminDashboard() {
                   <BarChart3 className="h-6 w-6" />
                 </div>
                 Station Performance
+                <span className="text-sm text-gray-400 font-normal">(Click station to view sales analysis)</span>
               </CardTitle>
               <Button
                 onClick={() => setShowCreatePO(true)}
@@ -407,7 +595,11 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="space-y-4">
               {stationsData.map((station) => (
-                <div key={station.id} className="p-6 bg-gray-800/30 rounded-2xl border border-gray-700/50">
+                <div
+                  key={station.id}
+                  className="p-6 bg-gray-800/30 rounded-2xl border border-gray-700/50 hover:bg-gray-800/50 cursor-pointer transition-all duration-300 hover:border-yellow-400/30"
+                  onClick={() => handleStationClick(station.id)}
+                >
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Station Info */}
                     <div className="space-y-4">
@@ -462,17 +654,41 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Tank Status */}
+                    {/* Tank Status with Alerts */}
                     <div className="space-y-3">
                       <h4 className="text-sm font-semibold text-gray-300">Tank Status</h4>
                       <div className="grid grid-cols-2 gap-2">
                         {station.tanks.map((tank) => (
-                          <div key={tank.name} className="p-3 bg-gray-700/30 rounded-xl">
+                          <div key={tank.name} className={`p-3 rounded-xl ${getTankAlertColor(tank.percentage)}`}>
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-xs text-gray-400">{tank.name}</span>
-                              <span className="text-xs font-semibold text-white">{tank.percentage}%</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-semibold text-white">{tank.percentage}%</span>
+                                {tank.percentage <= 20 && (
+                                  <AlertTriangle
+                                    className={`h-3 w-3 ${
+                                      tank.percentage <= 5
+                                        ? "text-red-400 animate-pulse"
+                                        : tank.percentage <= 10
+                                          ? "text-orange-400"
+                                          : "text-yellow-400"
+                                    }`}
+                                  />
+                                )}
+                              </div>
                             </div>
-                            <Progress value={tank.percentage} className="h-1 bg-gray-800" />
+                            <Progress
+                              value={tank.percentage}
+                              className={`h-1 ${
+                                tank.percentage <= 5
+                                  ? "bg-red-900"
+                                  : tank.percentage <= 10
+                                    ? "bg-orange-900"
+                                    : tank.percentage <= 20
+                                      ? "bg-yellow-900"
+                                      : "bg-gray-800"
+                              }`}
+                            />
                             <div className="flex justify-between items-center mt-1">
                               <span className="text-xs text-gray-500">{tank.fuel}</span>
                               <span className="text-xs text-gray-500">{tank.current.toLocaleString()}L</span>
@@ -548,7 +764,7 @@ export default function AdminDashboard() {
                 </SelectTrigger>
                 <SelectContent className="glass-card border-gray-700/50">
                   {stationsData.map((station) => (
-                    <SelectItem key={station.id} value={station.id}>
+                    <SelectItem key={station.id} value={station.id || "null"}>
                       {station.name}
                     </SelectItem>
                   ))}
@@ -630,7 +846,7 @@ export default function AdminDashboard() {
                 <SelectContent className="glass-card border-gray-700/50">
                   <SelectItem value="all">All Stations</SelectItem>
                   {stationsData.map((station) => (
-                    <SelectItem key={station.id} value={station.id}>
+                    <SelectItem key={station.id} value={station.id || "null"}>
                       {station.name}
                     </SelectItem>
                   ))}
@@ -642,7 +858,11 @@ export default function AdminDashboard() {
                 <div
                   key={notification.id}
                   className={`p-4 rounded-xl border ${
-                    notification.read ? "bg-gray-800/30 border-gray-700/50" : "bg-yellow-500/10 border-yellow-500/30"
+                    notification.read
+                      ? "bg-gray-800/30 border-gray-700/50"
+                      : notification.type?.includes("tank")
+                        ? "bg-red-500/10 border-red-500/30"
+                        : "bg-yellow-500/10 border-yellow-500/30"
                   }`}
                 >
                   <div className="flex justify-between items-start">

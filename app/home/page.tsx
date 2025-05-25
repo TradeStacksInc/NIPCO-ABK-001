@@ -6,6 +6,7 @@ import { Fuel, Users, ChevronRight, MapPin, Clock, Crown } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SystemInfo } from "@/components/system-info"
 
 const portalCards = [
   {
@@ -243,6 +244,12 @@ export default function HomePage() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* System Information */}
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-4">System Information</h2>
+          <SystemInfo />
+        </div>
+
         {/* Portal Cards */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6">Fuel Station Portals</h2>

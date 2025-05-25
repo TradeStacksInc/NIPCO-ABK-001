@@ -20,8 +20,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import { ModernDatePicker } from "@/components/modern-date-picker"
 
 // Mock data for staff sales
 const mockStaffSales = [
@@ -139,6 +139,9 @@ export default function SalesAnalysisPage() {
   const [selectedShift, setSelectedShift] = useState("All")
   const [selectedStaff, setSelectedStaff] = useState("All")
 
+  const [staffPerformanceDateFilter, setStaffPerformanceDateFilter] = useState("")
+  const [salesLogDateFilter, setSalesLogDateFilter] = useState("")
+
   const station = stationsData[stationId as keyof typeof stationsData]
 
   if (!station) {
@@ -255,12 +258,11 @@ export default function SalesAnalysisPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm text-gray-400 mb-2 block">Date</label>
-                <Input
-                  type="date"
+                <ModernDatePicker
+                  label="Date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="glass-card border-gray-700/50 text-white"
+                  onChange={setSelectedDate}
+                  placeholder="Select date"
                 />
               </div>
               <div>
@@ -429,10 +431,19 @@ export default function SalesAnalysisPage() {
         {/* Staff Performance Summary */}
         <Card className="glass-card border-gray-700/50 rounded-3xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
-              <Users className="h-6 w-6" />
-              Staff Performance Summary
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
+                <Users className="h-6 w-6" />
+                Staff Performance Summary
+              </CardTitle>
+              <div className="w-64">
+                <ModernDatePicker
+                  value={staffPerformanceDateFilter}
+                  onChange={setStaffPerformanceDateFilter}
+                  placeholder="Filter by date"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -484,10 +495,19 @@ export default function SalesAnalysisPage() {
         {/* Detailed Sales Log */}
         <Card className="glass-card border-gray-700/50 rounded-3xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
-              <TrendingUp className="h-6 w-6" />
-              Detailed Sales Log
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
+                <TrendingUp className="h-6 w-6" />
+                Detailed Sales Log
+              </CardTitle>
+              <div className="w-64">
+                <ModernDatePicker
+                  value={salesLogDateFilter}
+                  onChange={setSalesLogDateFilter}
+                  placeholder="Filter by date"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
+import { ModernDatePicker } from "@/components/modern-date-picker"
 
 // Mock data for all stations
 const stationsData = [
@@ -223,6 +224,7 @@ export default function AdminDashboard() {
     unitPrice: "830",
     expectedDelivery: "",
   })
+  const [purchaseOrderDateFilter, setPurchaseOrderDateFilter] = useState("")
 
   // Tank monitoring system
   useEffect(() => {
@@ -707,12 +709,30 @@ export default function AdminDashboard() {
         {/* Purchase Orders */}
         <Card className="glass-card border-gray-700/50 rounded-3xl">
           <CardHeader className="pb-6">
-            <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
-              <div className="p-2 bg-yellow-400/10 rounded-xl">
-                <Package className="h-6 w-6" />
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-yellow-400 text-xl">
+                <div className="p-2 bg-yellow-400/10 rounded-xl">
+                  <Package className="h-6 w-6" />
+                </div>
+                Purchase Orders
+              </CardTitle>
+              <div className="flex items-center gap-4">
+                <div className="w-64">
+                  <ModernDatePicker
+                    value={purchaseOrderDateFilter}
+                    onChange={setPurchaseOrderDateFilter}
+                    placeholder="Filter by date"
+                  />
+                </div>
+                <Button
+                  onClick={() => setShowCreatePO(true)}
+                  className="bg-yellow-500 text-black hover:bg-yellow-600 rounded-xl font-semibold"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Purchase Order
+                </Button>
               </div>
-              Purchase Orders
-            </CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -751,82 +771,225 @@ export default function AdminDashboard() {
 
       {/* Create Purchase Order Modal */}
       <Dialog open={showCreatePO} onOpenChange={setShowCreatePO}>
-        <DialogContent className="glass-card border-gray-700/50 text-white max-w-md">
+        <DialogContent className="glass-card border-gray-700/50 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-yellow-400">Create Purchase Order</DialogTitle>
+            <DialogTitle className="text-yellow-400 text-xl">Create Purchase Order</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Station</label>
-              <Select value={newPO.stationId} onValueChange={(value) => setNewPO({ ...newPO, stationId: value })}>
-                <SelectTrigger className="glass-card border-gray-700/50 text-white">
-                  <SelectValue placeholder="Select station" />
-                </SelectTrigger>
-                <SelectContent className="glass-card border-gray-700/50">
-                  {stationsData.map((station) => (
-                    <SelectItem key={station.id} value={station.id || "null"}>
-                      {station.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Station</label>
+                <Select value={newPO.stationId} onValueChange={(value) => setNewPO({ ...newPO, stationId: value })}>
+                  <SelectTrigger className="glass-card border-gray-700/50 text-white h-12 rounded-xl">
+                    <SelectValue placeholder="Select station" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card border-gray-700/50">
+                    {stationsData.map((station) => (
+                      <SelectItem key={station.id} value={station.id || "null"}>
+                        {station.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Fuel Type</label>
+                <Select value={newPO.fuelType} onValueChange={(value) => setNewPO({ ...newPO, fuelType: value })}>
+                  <SelectTrigger className="glass-card border-gray-700/50 text-white h-12 rounded-xl">
+                    <SelectValue placeholder="Select fuel type" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card border-gray-700/50">
+                    <SelectItem value="AGO">AGO (Diesel)</SelectItem>
+                    <SelectItem value="PMS">PMS (Petrol)</SelectItem>
+                    <SelectItem value="DPK">DPK (Kerosene)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Fuel Type</label>
-              <Select value={newPO.fuelType} onValueChange={(value) => setNewPO({ ...newPO, fuelType: value })}>
-                <SelectTrigger className="glass-card border-gray-700/50 text-white">
-                  <SelectValue placeholder="Select fuel type" />
-                </SelectTrigger>
-                <SelectContent className="glass-card border-gray-700/50">
-                  <SelectItem value="AGO">AGO (Diesel)</SelectItem>
-                  <SelectItem value="PMS">PMS (Petrol)</SelectItem>
-                  <SelectItem value="DPK">DPK (Kerosene)</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Quantity (Liters)</label>
+                <Input
+                  type="number"
+                  value={newPO.quantity}
+                  onChange={(e) => setNewPO({ ...newPO, quantity: e.target.value })}
+                  className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                  placeholder="Enter quantity"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Unit Price (₦)</label>
+                <Input
+                  type="number"
+                  value={newPO.unitPrice}
+                  onChange={(e) => setNewPO({ ...newPO, unitPrice: e.target.value })}
+                  className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                />
+              </div>
             </div>
+
             <div>
-              <label className="text-sm text-gray-400 mb-2 block">Quantity (Liters)</label>
-              <Input
-                type="number"
-                value={newPO.quantity}
-                onChange={(e) => setNewPO({ ...newPO, quantity: e.target.value })}
-                className="glass-card border-gray-700/50 text-white"
-                placeholder="Enter quantity"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Unit Price (₦)</label>
-              <Input
-                type="number"
-                value={newPO.unitPrice}
-                onChange={(e) => setNewPO({ ...newPO, unitPrice: e.target.value })}
-                className="glass-card border-gray-700/50 text-white"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Expected Delivery Date</label>
-              <Input
-                type="date"
+              <ModernDatePicker
+                label="Expected Delivery Date"
                 value={newPO.expectedDelivery}
-                onChange={(e) => setNewPO({ ...newPO, expectedDelivery: e.target.value })}
-                className="glass-card border-gray-700/50 text-white"
+                onChange={(date) => setNewPO({ ...newPO, expectedDelivery: date })}
+                placeholder="Select delivery date"
               />
             </div>
+
+            {/* Supplier Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-yellow-400">Supplier Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Supplier Company</label>
+                  <Select>
+                    <SelectTrigger className="glass-card border-gray-700/50 text-white h-12 rounded-xl">
+                      <SelectValue placeholder="Select supplier" />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card border-gray-700/50">
+                      <SelectItem value="nnpc">NNPC Lagos Terminal</SelectItem>
+                      <SelectItem value="total">Total Nigeria Plc</SelectItem>
+                      <SelectItem value="conoil">Conoil Plc</SelectItem>
+                      <SelectItem value="oando">Oando Plc</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Supplier Contact</label>
+                  <Input
+                    className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                    placeholder="Contact person"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Supplier Address</label>
+                <Input
+                  className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                  placeholder="Supplier address"
+                />
+              </div>
+            </div>
+
+            {/* Driver Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-yellow-400">Driver Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Driver Name</label>
+                  <Input
+                    className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                    placeholder="Driver full name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Driver License</label>
+                  <Input
+                    className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                    placeholder="License number"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Vehicle Plate Number</label>
+                  <Input
+                    className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                    placeholder="Vehicle registration"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Driver Phone</label>
+                  <Input
+                    className="glass-card border-gray-700/50 text-white h-12 rounded-xl"
+                    placeholder="Contact number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-yellow-400">Payment Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Payment Method</label>
+                  <Select>
+                    <SelectTrigger className="glass-card border-gray-700/50 text-white h-12 rounded-xl">
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card border-gray-700/50">
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cash">Cash Payment</SelectItem>
+                      <SelectItem value="credit">Credit Terms</SelectItem>
+                      <SelectItem value="check">Bank Check</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Payment Terms</label>
+                  <Select>
+                    <SelectTrigger className="glass-card border-gray-700/50 text-white h-12 rounded-xl">
+                      <SelectValue placeholder="Select terms" />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card border-gray-700/50">
+                      <SelectItem value="immediate">Immediate Payment</SelectItem>
+                      <SelectItem value="net30">Net 30 Days</SelectItem>
+                      <SelectItem value="net60">Net 60 Days</SelectItem>
+                      <SelectItem value="cod">Cash on Delivery</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
             {newPO.quantity && newPO.unitPrice && (
-              <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                <p className="text-sm text-gray-400">Total Value</p>
-                <p className="text-xl font-bold text-yellow-400">
-                  ₦{(Number.parseInt(newPO.quantity || "0") * Number.parseInt(newPO.unitPrice || "0")).toLocaleString()}
-                </p>
+              <div className="p-6 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
+                <h4 className="text-lg font-semibold text-yellow-400 mb-4">Order Summary</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-400">Quantity</p>
+                    <p className="text-xl font-bold text-white">
+                      {Number.parseInt(newPO.quantity || "0").toLocaleString()}L
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Unit Price</p>
+                    <p className="text-xl font-bold text-white">
+                      ₦{Number.parseInt(newPO.unitPrice || "0").toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-400">Total Value</p>
+                    <p className="text-3xl font-bold text-yellow-400">
+                      ₦
+                      {(
+                        Number.parseInt(newPO.quantity || "0") * Number.parseInt(newPO.unitPrice || "0")
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
-            <Button
-              onClick={handleCreatePO}
-              disabled={!newPO.stationId || !newPO.fuelType || !newPO.quantity || !newPO.expectedDelivery}
-              className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
-            >
-              Create Purchase Order
-            </Button>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreatePO(false)}
+                className="flex-1 border-gray-700/50 text-gray-300 hover:bg-gray-800/50 h-12 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreatePO}
+                disabled={!newPO.stationId || !newPO.fuelType || !newPO.quantity || !newPO.expectedDelivery}
+                className="flex-1 bg-yellow-500 text-black hover:bg-yellow-600 h-12 rounded-xl font-semibold"
+              >
+                Create Purchase Order
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

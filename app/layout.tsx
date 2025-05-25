@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "Modern fuel station management system",
   icons: {
     icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
   generator: "v0.dev",
 }

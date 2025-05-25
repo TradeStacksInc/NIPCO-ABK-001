@@ -170,33 +170,10 @@ export default function HomePage() {
   }
 
   const getColorClasses = (color: string, isActive: boolean) => {
-    const colorMap: { [key: string]: string } = {
-      blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30 hover:border-blue-400/50",
-      teal: "from-teal-500/20 to-teal-600/20 border-teal-500/30 hover:border-teal-400/50",
-      green: "from-green-500/20 to-green-600/20 border-green-500/30 hover:border-green-400/50",
-      purple: "from-purple-500/20 to-purple-600/20 border-purple-500/30 hover:border-purple-400/50",
-      orange: "from-orange-500/20 to-orange-600/20 border-orange-500/30 hover:border-orange-400/50",
-      red: "from-red-500/20 to-red-600/20 border-red-500/30 hover:border-red-400/50",
-      indigo: "from-indigo-500/20 to-indigo-600/20 border-indigo-500/30 hover:border-indigo-400/50",
-      pink: "from-pink-500/20 to-pink-600/20 border-pink-500/30 hover:border-pink-400/50",
-      cyan: "from-cyan-500/20 to-cyan-600/20 border-cyan-500/30 hover:border-cyan-400/50",
-      yellow: "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 hover:border-yellow-400/50",
-    }
+    const activeClasses = "from-gray-900 to-black border-gray-700/50 hover:border-gray-600/70"
+    const inactiveClasses = "from-gray-900/60 to-black/60 border-gray-800/30 hover:border-gray-700/50"
 
-    const greyMap: { [key: string]: string } = {
-      blue: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      teal: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      green: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      purple: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      orange: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      red: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      indigo: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      pink: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      cyan: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-      yellow: "from-gray-500/20 to-gray-600/20 border-gray-500/30 hover:border-gray-400/50",
-    }
-
-    return isActive ? colorMap[color] || colorMap.blue : greyMap[color] || greyMap.blue
+    return isActive ? activeClasses : inactiveClasses
   }
 
   const getStatusColor = (status: string) => {
@@ -266,8 +243,8 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 bg-${card.isActive ? card.color : "gray"}-500/30 rounded-xl`}>
-                          <Fuel className={`h-5 w-5 text-${card.isActive ? card.color : "gray"}-400`} />
+                        <div className={`p-3 rounded-xl ${card.isActive ? `bg-${card.color}-500` : "bg-gray-600"}`}>
+                          <Fuel className={`h-6 w-6 ${card.isActive ? "text-white" : "text-gray-300"}`} />
                         </div>
                         <div>
                           <h3 className="font-semibold text-white text-lg">{card.title}</h3>
@@ -306,8 +283,8 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gray-500/30 rounded-xl">
-                        <fleetCard.icon className="h-5 w-5 text-gray-400" />
+                      <div className="p-3 bg-gray-600 rounded-xl">
+                        <fleetCard.icon className="h-6 w-6 text-gray-300" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-white text-lg">{fleetCard.title}</h3>
@@ -328,6 +305,16 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      {/* Footer */}
+      <footer className="mt-16 border-t border-gray-800/50 bg-gray-900/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="text-center">
+            <p className="text-sm text-gray-400">
+              © 2025 NIPCO Enterprise Portal. All rights reserved. AI Management System.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

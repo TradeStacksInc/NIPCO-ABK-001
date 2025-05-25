@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button"
 
 interface FuelStationSidebarProps {
+  stationName?: string
+  stationColor?: string
   onSalesReportClick?: () => void
   onDriverOffloadClick?: () => void
   onTankOffloadClick?: () => void
@@ -26,6 +28,8 @@ interface FuelStationSidebarProps {
 }
 
 export function FuelStationSidebar({
+  stationName = "NIPCO Station",
+  stationColor = "blue",
   onSalesReportClick,
   onDriverOffloadClick,
   onTankOffloadClick,
@@ -45,7 +49,7 @@ export function FuelStationSidebar({
       title: "Sales Report",
       icon: FileText,
       onClick: onSalesReportClick,
-      isActive: currentView === "sales",
+      isActive: currentView === "sales-report",
     },
     {
       title: "Driver Offload",
@@ -73,16 +77,65 @@ export function FuelStationSidebar({
     },
   ]
 
+  const getColorClasses = (color: string) => {
+    switch (color) {
+      case "green":
+        return {
+          primary: "text-green-400",
+          bg: "bg-green-400",
+          hover: "hover:bg-green-400/10 hover:text-green-300",
+          active: "bg-green-400 text-black hover:bg-green-500",
+          icon: "bg-green-600/30",
+        }
+      case "purple":
+        return {
+          primary: "text-purple-400",
+          bg: "bg-purple-400",
+          hover: "hover:bg-purple-400/10 hover:text-purple-300",
+          active: "bg-purple-400 text-black hover:bg-purple-500",
+          icon: "bg-purple-600/30",
+        }
+      case "orange":
+        return {
+          primary: "text-orange-400",
+          bg: "bg-orange-400",
+          hover: "hover:bg-orange-400/10 hover:text-orange-300",
+          active: "bg-orange-400 text-black hover:bg-orange-500",
+          icon: "bg-orange-600/30",
+        }
+      case "teal":
+        return {
+          primary: "text-teal-400",
+          bg: "bg-teal-400",
+          hover: "hover:bg-teal-400/10 hover:text-teal-300",
+          active: "bg-teal-400 text-black hover:bg-teal-500",
+          icon: "bg-teal-600/30",
+        }
+      default: // blue
+        return {
+          primary: "text-blue-400",
+          bg: "bg-blue-400",
+          hover: "hover:bg-blue-400/10 hover:text-blue-300",
+          active: "bg-blue-400 text-black hover:bg-blue-500",
+          icon: "bg-blue-600/30",
+        }
+    }
+  }
+
+  const colorClasses = getColorClasses(stationColor)
+
   return (
     <Sidebar className="sidebar-modern">
       <SidebarHeader className="border-b border-gray-800/50 p-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 text-black shadow-lg animate-pulse-glow">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-${stationColor}-400 to-${stationColor}-500 text-black shadow-lg animate-pulse-glow`}
+          >
             <Fuel className="h-7 w-7" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold text-blue-400">NIPCO</span>
-            <span className="text-xs text-blue-300 font-medium">ABK-001</span>
+            <span className={`text-xl font-bold ${colorClasses.primary}`}>NIPCO</span>
+            <span className={`text-xs ${colorClasses.primary} font-medium`}>Fuel Station</span>
           </div>
         </div>
       </SidebarHeader>
@@ -96,14 +149,12 @@ export function FuelStationSidebar({
                   <SidebarMenuButton
                     isActive={item.isActive}
                     className={`sidebar-item transition-all duration-300 rounded-2xl h-12 font-medium cursor-pointer ${
-                      item.isActive
-                        ? "bg-blue-400 text-black hover:bg-blue-500"
-                        : "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50"
+                      item.isActive ? colorClasses.active : `text-gray-400 ${colorClasses.hover}`
                     }`}
                     onClick={item.onClick}
                   >
                     <div className="flex items-center gap-4 rounded-2xl px-4 py-3 w-full">
-                      <div className={`p-2 rounded-xl ${item.isActive ? "bg-blue-600/30" : "bg-gray-700/50"}`}>
+                      <div className={`p-2 rounded-xl ${item.isActive ? colorClasses.icon : "bg-gray-700/50"}`}>
                         <item.icon className="h-5 w-5" />
                       </div>
                       <span className="font-medium">{item.title}</span>

@@ -2,31 +2,64 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Fuel, Building2, Truck, Users, BarChart3, Settings, Shield, MapPin, Calendar, FileText } from "lucide-react"
+import { Fuel, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const portalCards = [
   {
-    id: "fuel-station",
-    title: "Fuel Station Management",
+    id: "nipco-abk-001",
+    title: "NIPCO ABK-001",
     description: "Complete fuel station operations, sales tracking, and inventory management",
     icon: Fuel,
     color: "from-blue-400 to-blue-500",
     bgColor: "bg-blue-400/10",
     borderColor: "border-blue-400/30",
-    route: "/portal", // Change this from "/" to "/portal"
+    route: "/portal/abk-001",
     isActive: true,
   },
   {
-    id: "warehouse",
-    title: "Warehouse Operations",
-    description: "Inventory management, stock tracking, and warehouse logistics",
-    icon: Building2,
-    color: "from-green-400 to-green-500",
-    bgColor: "bg-green-400/10",
-    borderColor: "border-green-400/30",
-    route: "/warehouse",
-    isActive: false,
+    id: "nipco-uyo-1-002",
+    title: "NIPCO Uyo 1-002",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-blue-400 to-blue-500",
+    bgColor: "bg-blue-400/10",
+    borderColor: "border-blue-400/30",
+    route: "/portal/uyo-1-002",
+    isActive: true,
+  },
+  {
+    id: "nipco-uyo-2-003",
+    title: "NIPCO Uyo 2-003",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-blue-400 to-blue-500",
+    bgColor: "bg-blue-400/10",
+    borderColor: "border-blue-400/30",
+    route: "/portal/uyo-2-003",
+    isActive: true,
+  },
+  {
+    id: "nipco-ik-004",
+    title: "NIPCO Ik-004",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-blue-400 to-blue-500",
+    bgColor: "bg-blue-400/10",
+    borderColor: "border-blue-400/30",
+    route: "/portal/ik-004",
+    isActive: true,
+  },
+  {
+    id: "nipco-ib-005",
+    title: "NIPCO Ib-005",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-blue-400 to-blue-500",
+    bgColor: "bg-blue-400/10",
+    borderColor: "border-blue-400/30",
+    route: "/portal/ib-005",
+    isActive: true,
   },
   {
     id: "fleet",
@@ -37,83 +70,6 @@ const portalCards = [
     bgColor: "bg-orange-400/10",
     borderColor: "border-orange-400/30",
     route: "/fleet",
-    isActive: false,
-  },
-  {
-    id: "hr",
-    title: "Human Resources",
-    description: "Employee management, payroll, and performance tracking",
-    icon: Users,
-    color: "from-purple-400 to-purple-500",
-    bgColor: "bg-purple-400/10",
-    borderColor: "border-purple-400/30",
-    route: "/hr",
-    isActive: false,
-  },
-  {
-    id: "analytics",
-    title: "Business Analytics",
-    description: "Advanced reporting, data visualization, and business insights",
-    icon: BarChart3,
-    color: "from-cyan-400 to-cyan-500",
-    bgColor: "bg-cyan-400/10",
-    borderColor: "border-cyan-400/30",
-    route: "/analytics",
-    isActive: false,
-  },
-  {
-    id: "admin",
-    title: "System Administration",
-    description: "User management, system settings, and security configuration",
-    icon: Settings,
-    color: "from-gray-400 to-gray-500",
-    bgColor: "bg-gray-400/10",
-    borderColor: "border-gray-400/30",
-    route: "/admin",
-    isActive: false,
-  },
-  {
-    id: "security",
-    title: "Security & Compliance",
-    description: "Access control, audit logs, and compliance monitoring",
-    icon: Shield,
-    color: "from-red-400 to-red-500",
-    bgColor: "bg-red-400/10",
-    borderColor: "border-red-400/30",
-    route: "/security",
-    isActive: false,
-  },
-  {
-    id: "locations",
-    title: "Location Management",
-    description: "Multi-site operations, regional oversight, and location analytics",
-    icon: MapPin,
-    color: "from-yellow-400 to-yellow-500",
-    bgColor: "bg-yellow-400/10",
-    borderColor: "border-yellow-400/30",
-    route: "/locations",
-    isActive: false,
-  },
-  {
-    id: "scheduling",
-    title: "Scheduling & Planning",
-    description: "Shift management, resource planning, and operational scheduling",
-    icon: Calendar,
-    color: "from-indigo-400 to-indigo-500",
-    bgColor: "bg-indigo-400/10",
-    borderColor: "border-indigo-400/30",
-    route: "/scheduling",
-    isActive: false,
-  },
-  {
-    id: "reports",
-    title: "Reports & Documentation",
-    description: "Generate reports, manage documents, and regulatory compliance",
-    icon: FileText,
-    color: "from-pink-400 to-pink-500",
-    bgColor: "bg-pink-400/10",
-    borderColor: "border-pink-400/30",
-    route: "/reports",
     isActive: false,
   },
 ]
@@ -222,10 +178,10 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Active Portals</p>
-                  <p className="text-2xl font-bold text-blue-400">1</p>
+                  <p className="text-2xl font-bold text-blue-400">5</p>
                 </div>
                 <div className="p-3 bg-blue-400/10 rounded-xl">
-                  <Shield className="h-6 w-6 text-blue-400" />
+                  <Fuel className="h-6 w-6 text-blue-400" />
                 </div>
               </div>
             </CardContent>
@@ -235,11 +191,11 @@ export default function HomePage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Modules</p>
-                  <p className="text-2xl font-bold text-gray-300">10</p>
+                  <p className="text-sm text-gray-400">Fuel Stations</p>
+                  <p className="text-2xl font-bold text-gray-300">5</p>
                 </div>
                 <div className="p-3 bg-gray-400/10 rounded-xl">
-                  <Building2 className="h-6 w-6 text-gray-400" />
+                  <Fuel className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
             </CardContent>
@@ -253,7 +209,7 @@ export default function HomePage() {
                   <p className="text-2xl font-bold text-green-400">Online</p>
                 </div>
                 <div className="p-3 bg-green-400/10 rounded-xl">
-                  <Shield className="h-6 w-6 text-green-400" />
+                  <Fuel className="h-6 w-6 text-green-400" />
                 </div>
               </div>
             </CardContent>

@@ -43,12 +43,15 @@ export function TotalSalesModal({ open, onClose, salesHistory }: TotalSalesModal
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [newExpense, setNewExpense] = useState({ description: "", amount: "" })
 
+  // Add safety check for salesHistory
+  const safeSalesHistory = salesHistory || []
+
   // Get unique dates and shifts from sales history
-  const availableDates = [...new Set(salesHistory.map((sale) => sale.date))].sort().reverse()
+  const availableDates = [...new Set(safeSalesHistory.map((sale) => sale.date))].sort().reverse()
   const availableShifts = ["Morning", "Afternoon"]
 
   // Filter sales based on selected date and shift
-  const filteredSales = salesHistory.filter((sale) => {
+  const filteredSales = safeSalesHistory.filter((sale) => {
     const matchesDate = !selectedDate || sale.date === selectedDate
     const matchesShift = !selectedShift || sale.shift === selectedShift
     return matchesDate && matchesShift
@@ -148,18 +151,18 @@ export function TotalSalesModal({ open, onClose, salesHistory }: TotalSalesModal
       yPosition += 5
 
       // Sales data
-      filteredSales.forEach((sale) => {
+      safeSalesHistory.forEach((sale) => {
         if (yPosition > 270) {
           doc.addPage()
           yPosition = 20
         }
 
-        doc.text(sale.attendant.substring(0, 12), 20, yPosition)
-        doc.text(sale.nozzle.split(" ")[0], 50, yPosition)
-        doc.text(`${sale.liters}L`, 70, yPosition)
-        doc.text(`NGN ${sale.amount.toLocaleString()}`, 90, yPosition)
-        doc.text(sale.time, 120, yPosition)
-        doc.text(sale.shift, 150, yPosition)
+        doc.text(sale.attendant?.substring(0, 12) || "N/A", 20, yPosition)
+        doc.text(sale.nozzle?.split(" ")[0] || "N/A", 50, yPosition)
+        doc.text(`${sale.liters || 0}L`, 70, yPosition)
+        doc.text(`NGN ${(sale.amount || 0).toLocaleString()}`, 90, yPosition)
+        doc.text(sale.time || "N/A", 120, yPosition)
+        doc.text(sale.shift || "N/A", 150, yPosition)
         yPosition += 8
       })
     }

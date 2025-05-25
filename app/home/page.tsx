@@ -72,6 +72,61 @@ const portalCards = [
     route: "/fleet",
     isActive: false,
   },
+  {
+    id: "nipco-eket-006",
+    title: "NIPCO Eket-006",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-red-400 to-red-500",
+    bgColor: "bg-red-400/10",
+    borderColor: "border-red-400/30",
+    route: "/portal/eket-006",
+    isActive: false,
+  },
+  {
+    id: "nipco-oron-007",
+    title: "NIPCO Oron-007",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-indigo-400 to-indigo-500",
+    bgColor: "bg-indigo-400/10",
+    borderColor: "border-indigo-400/30",
+    route: "/portal/oron-007",
+    isActive: false,
+  },
+  {
+    id: "nipco-calabar-008",
+    title: "NIPCO Calabar-008",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-pink-400 to-pink-500",
+    bgColor: "bg-pink-400/10",
+    borderColor: "border-pink-400/30",
+    route: "/portal/calabar-008",
+    isActive: false,
+  },
+  {
+    id: "nipco-port-harcourt-009",
+    title: "NIPCO Port Harcourt-009",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-cyan-400 to-cyan-500",
+    bgColor: "bg-cyan-400/10",
+    borderColor: "border-cyan-400/30",
+    route: "/portal/port-harcourt-009",
+    isActive: false,
+  },
+  {
+    id: "nipco-warri-010",
+    title: "NIPCO Warri-010",
+    description: "Complete fuel station operations, sales tracking, and inventory management",
+    icon: Fuel,
+    color: "from-yellow-400 to-yellow-500",
+    bgColor: "bg-yellow-400/10",
+    borderColor: "border-yellow-400/30",
+    route: "/portal/warri-010",
+    isActive: false,
+  },
 ]
 
 export default function HomePage() {
@@ -192,7 +247,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Fuel Stations</p>
-                  <p className="text-2xl font-bold text-gray-300">5</p>
+                  <p className="text-2xl font-bold text-gray-300">10</p>
                 </div>
                 <div className="p-3 bg-gray-400/10 rounded-xl">
                   <Fuel className="h-6 w-6 text-gray-400" />

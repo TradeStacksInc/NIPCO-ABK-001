@@ -448,6 +448,37 @@ export default function IB005Portal() {
 
             <Card className="glass-card rounded-2xl border-gray-700/50">
               <CardHeader>
+                <CardTitle className="text-orange-400">Total Tank Capacity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {stationData.tanks.map((tank) => {
+                    const percentage = (tank.current / tank.capacity) * 100
+                    return (
+                      <div key={tank.id} className="p-4 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-medium text-gray-300">{tank.name}</h3>
+                          <span className="text-xs text-orange-400">{tank.type}</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>{tank.current.toLocaleString()}L</span>
+                            <span>{tank.capacity.toLocaleString()}L</span>
+                          </div>
+                          <Progress value={percentage} className="h-2" />
+                          <div className="text-center">
+                            <span className="text-sm font-semibold text-orange-400">{percentage.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card rounded-2xl border-gray-700/50">
+              <CardHeader>
                 <CardTitle className="text-orange-400">Real-time Alerts</CardTitle>
               </CardHeader>
               <CardContent className="p-6">

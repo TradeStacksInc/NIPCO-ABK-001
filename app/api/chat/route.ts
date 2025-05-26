@@ -54,6 +54,31 @@ function validateChatRequest(data: any): ChatRequest {
   }
 }
 
+// Validate API key format
+function validateApiKey(apiKey: string): boolean {
+  // OpenAI API keys start with 'sk-' and are typically 51 characters long
+  if (!apiKey || typeof apiKey !== "string") {
+    return false
+  }
+
+  // Check if it's a placeholder or invalid key
+  if (
+    apiKey.includes("your_ope") ||
+    apiKey.includes("************") ||
+    apiKey === "your_openai_api_key_here" ||
+    apiKey.length < 20
+  ) {
+    return false
+  }
+
+  // Should start with 'sk-'
+  if (!apiKey.startsWith("sk-")) {
+    return false
+  }
+
+  return true
+}
+
 // Retry logic with exponential backoff
 async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 1000): Promise<T> {
   let lastError: Error
@@ -65,7 +90,7 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
       lastError = error as Error
 
       // Don't retry on client errors (4xx) or authentication errors
-      if (error instanceof Error && error.message.includes("4")) {
+      if (error instanceof Error && (error.message.includes("401") || error.message.includes("400"))) {
         throw error
       }
 
@@ -90,14 +115,31 @@ export async function POST(request: NextRequest) {
   try {
     console.log("🚀 Chat API request received")
 
-    // Validate environment variables
-    if (!process.env.OPENAI_API_KEY) {
+    // Check if API key exists
+    const apiKey = process.env.OPENAI_API_KEY
+
+    if (!apiKey) {
       console.error("❌ OPENAI_API_KEY environment variable is not set")
       return NextResponse.json(
         {
-          error: "Server configuration error",
+          error: "OpenAI API key not configured",
           code: "MISSING_API_KEY",
-          message: "OpenAI API key is not configured",
+          message: "Please add your OpenAI API key to the environment variables",
+          instructions: "Add OPENAI_API_KEY=your_actual_api_key to your environment variables",
+        },
+        { status: 500 },
+      )
+    }
+
+    // Validate API key format
+    if (!validateApiKey(apiKey)) {
+      console.error("❌ Invalid OpenAI API key format detected")
+      return NextResponse.json(
+        {
+          error: "Invalid API key format",
+          code: "INVALID_API_KEY",
+          message: "The OpenAI API key appears to be invalid or is a placeholder",
+          instructions: "Please ensure you have set a valid OpenAI API key that starts with 'sk-'",
         },
         { status: 500 },
       )
@@ -141,7 +183,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare OpenAI API call
     const openaiRequest = {
-      model: "gpt-3.5-turbo", // Using stable model
+      model: "gpt-3.5-turbo",
       messages: validatedRequest.messages,
       max_tokens: 1000,
       temperature: 0.7,
@@ -152,56 +194,62 @@ export async function POST(request: NextRequest) {
       model: openaiRequest.model,
       messageCount: openaiRequest.messages.length,
       maxTokens: openaiRequest.max_tokens,
+      apiKeyPrefix: apiKey.substring(0, 7) + "...",
     })
 
-    // Make API call with retry logic
-    const openaiResponse = await retryWithBackoff(async () => {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-          "User-Agent": "NIPCO-Chat-Widget/1.0",
-        },
-        body: JSON.stringify(openaiRequest),
-      })
-
-      console.log("📡 OpenAI API response status:", response.status)
-
-      if (!response.ok) {
-        let errorDetails: any = {}
-        try {
-          errorDetails = await response.json()
-        } catch {
-          errorDetails = { message: await response.text() }
-        }
-
-        console.error("❌ OpenAI API error:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorDetails,
+    // Make API call with retry logic (but don't retry auth errors)
+    const openaiResponse = await retryWithBackoff(
+      async () => {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "User-Agent": "NIPCO-Chat-Widget/1.0",
+          },
+          body: JSON.stringify(openaiRequest),
         })
 
-        // Throw specific errors based on status code
-        if (response.status === 401) {
-          throw new Error("Invalid API key - please check your OpenAI API key")
-        } else if (response.status === 429) {
-          throw new Error("Rate limit exceeded - please try again later")
-        } else if (response.status === 400) {
-          throw new Error(`Bad request: ${errorDetails.error?.message || "Invalid request format"}`)
-        } else if (response.status >= 500) {
-          throw new Error(
-            `OpenAI server error (${response.status}): ${errorDetails.error?.message || "Internal server error"}`,
-          )
-        } else {
-          throw new Error(
-            `OpenAI API error (${response.status}): ${errorDetails.error?.message || response.statusText}`,
-          )
-        }
-      }
+        console.log("📡 OpenAI API response status:", response.status)
 
-      return response
-    })
+        if (!response.ok) {
+          let errorDetails: any = {}
+          try {
+            errorDetails = await response.json()
+          } catch {
+            errorDetails = { message: await response.text() }
+          }
+
+          console.error("❌ OpenAI API error:", {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorDetails,
+          })
+
+          // Throw specific errors based on status code
+          if (response.status === 401) {
+            throw new Error(
+              `Invalid API key: ${errorDetails.error?.message || "Authentication failed"}. Please check your OpenAI API key.`,
+            )
+          } else if (response.status === 429) {
+            throw new Error("Rate limit exceeded - please try again later")
+          } else if (response.status === 400) {
+            throw new Error(`Bad request: ${errorDetails.error?.message || "Invalid request format"}`)
+          } else if (response.status >= 500) {
+            throw new Error(
+              `OpenAI server error (${response.status}): ${errorDetails.error?.message || "Internal server error"}`,
+            )
+          } else {
+            throw new Error(
+              `OpenAI API error (${response.status}): ${errorDetails.error?.message || response.statusText}`,
+            )
+          }
+        }
+
+        return response
+      },
+      1, // Don't retry auth errors
+    )
 
     // Parse successful response
     let openaiData: any
@@ -258,9 +306,16 @@ export async function POST(request: NextRequest) {
 
 // Health check endpoint
 export async function GET() {
+  const apiKey = process.env.OPENAI_API_KEY
+  const hasValidApiKey = apiKey && validateApiKey(apiKey)
+
   return NextResponse.json({
-    status: "healthy",
+    status: hasValidApiKey ? "healthy" : "configuration_required",
     timestamp: new Date().toISOString(),
-    hasApiKey: !!process.env.OPENAI_API_KEY,
+    hasApiKey: !!apiKey,
+    validApiKey: hasValidApiKey,
+    message: hasValidApiKey
+      ? "OpenAI API key is properly configured"
+      : "OpenAI API key is missing or invalid. Please check your environment variables.",
   })
 }

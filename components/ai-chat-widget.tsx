@@ -2,8 +2,10 @@
 
 import type React from "react"
 
+import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Mic, MicOff, Send, X, MessageCircle, Volume2, VolumeX, AlertCircle } from "lucide-react"
+import { Mic, MicOff, Send, X, Volume2, VolumeX, AlertCircle, Settings } from "lucide-react"
+import { MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
@@ -26,6 +28,13 @@ interface AppContext {
   timestamp: string
 }
 
+interface ApiHealthStatus {
+  status: string
+  hasApiKey: boolean
+  validApiKey: boolean
+  message: string
+}
+
 // Define SpeechRecognition interface
 declare global {
   interface Window {
@@ -35,6 +44,7 @@ declare global {
 }
 
 export function AIChatWidget() {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState("")
@@ -43,7 +53,10 @@ export function AIChatWidget() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("checking")
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking" | "config_error">(
+    "checking",
+  )
+  const [apiHealth, setApiHealth] = useState<ApiHealthStatus | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
@@ -60,8 +73,15 @@ export function AIChatWidget() {
       setConnectionStatus("checking")
       const response = await fetch("/api/chat", { method: "GET" })
       if (response.ok) {
-        const data = await response.json()
-        setConnectionStatus(data.hasApiKey ? "connected" : "disconnected")
+        const data: ApiHealthStatus = await response.json()
+        setApiHealth(data)
+
+        if (data.validApiKey) {
+          setConnectionStatus("connected")
+        } else {
+          setConnectionStatus("config_error")
+        }
+
         console.log("🔍 API Health Check:", data)
       } else {
         setConnectionStatus("disconnected")
@@ -107,13 +127,16 @@ export function AIChatWidget() {
       // Initialize with welcome message
       const welcomeMessage: Message = {
         id: "welcome",
-        text: "Hello! I'm your NIPCO AI assistant. I'm fully aware of your current app state and can help you with anything related to your fuel station management system. How can I assist you today?",
+        text:
+          connectionStatus === "config_error"
+            ? "Hello! I'm your NIPCO AI assistant, but I'm currently unable to connect to my AI service due to a configuration issue. I can still help you navigate the system using my offline knowledge!"
+            : "Hello! I'm your NIPCO AI assistant. I'm fully aware of your current app state and can help you with anything related to your fuel station management system. How can I assist you today?",
         isUser: false,
         timestamp: new Date(),
       }
       setMessages([welcomeMessage])
     }
-  }, [])
+  }, [connectionStatus])
 
   // Gather comprehensive app context with size limits
   const gatherAppContext = useCallback((): AppContext => {
@@ -134,10 +157,8 @@ export function AIChatWidget() {
         for (let i = 0; i < Math.min(localStorage.length, 10); i++) {
           const key = localStorage.key(i)
           if (key && key.length < 50) {
-            // Limit key length
             const value = localStorage.getItem(key)
             if (value && value.length < 200) {
-              // Limit value length
               context.localStorage[key] = value
             }
           }
@@ -176,7 +197,7 @@ export function AIChatWidget() {
     return context
   }, [])
 
-  // Mock data gathering functions (replace with real app data)
+  // Mock data gathering functions
   const getStationData = (stationId: string) => ({
     id: stationId,
     name: `NIPCO ${stationId.toUpperCase()}`,
@@ -223,6 +244,11 @@ export function AIChatWidget() {
   // Enhanced OpenAI API integration with proper error handling
   const sendToOpenAI = async (userMessage: string, context: AppContext): Promise<string> => {
     console.log("🚀 Sending message to OpenAI:", { userMessage: userMessage.slice(0, 100) + "..." })
+
+    // Check if API is properly configured
+    if (connectionStatus === "config_error") {
+      throw new Error("OpenAI API key is not properly configured. Please check your environment variables.")
+    }
 
     try {
       // Validate input
@@ -301,6 +327,10 @@ Respond naturally and helpfully, referencing the current context when appropriat
         } else if (response.status === 429) {
           throw new Error("Rate limit exceeded. Please try again in a moment.")
         } else if (response.status >= 500) {
+          if (errorData.code === "MISSING_API_KEY" || errorData.code === "INVALID_API_KEY") {
+            setConnectionStatus("config_error")
+            throw new Error(`Configuration Error: ${errorData.message || "OpenAI API key is not properly configured"}`)
+          }
           throw new Error(`Server error: ${errorData.message || errorData.error || "Internal server error"}`)
         } else {
           throw new Error(`Request failed with status ${response.status}`)
@@ -335,23 +365,32 @@ Respond naturally and helpfully, referencing the current context when appropriat
   const getFallbackResponse = (context: AppContext, userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase()
 
+    // API configuration error
+    if (connectionStatus === "config_error") {
+      return "I'm currently unable to access my AI capabilities due to a configuration issue with the OpenAI API key. However, I can still help you navigate the NIPCO system! Try asking me about specific features or navigation."
+    }
+
     if (lowerMessage.includes("station") || lowerMessage.includes("nipco")) {
       if (context.currentPage.includes("/portal/")) {
         const stationId = context.currentPage.split("/portal/")[1]
-        return `I'm currently offline, but I can see you're viewing the ${stationId.toUpperCase()} station portal. You can navigate using the sidebar to access Sales Report, Driver Offload, Tank Offload, Manage Staff, and System Log.`
+        return `I can see you're viewing the ${stationId.toUpperCase()} station portal. You can navigate using the sidebar to access Sales Report, Driver Offload, Tank Offload, Manage Staff, and System Log.`
       }
-      return "I'm currently offline, but you can access your fuel stations from the home page. There are 5 active NIPCO stations available for management."
+      return "You can access your fuel stations from the home page. There are 5 active NIPCO stations available for management: ABK-001, UYO 1-002, UYO 2-003, IK-004, and IB-005."
     }
 
     if (lowerMessage.includes("help") || lowerMessage.includes("how")) {
-      return "I'm currently offline, but you can navigate through the system using the sidebar menu. Key features include Dashboard, Sales Report, Driver/Tank Offload forms, Staff Management, and System Logs."
+      return "I can help you navigate through the system using the sidebar menu. Key features include Dashboard, Sales Report, Driver/Tank Offload forms, Staff Management, and System Logs."
     }
 
     if (lowerMessage.includes("sales") || lowerMessage.includes("revenue")) {
-      return "I'm currently offline, but you can view sales data by navigating to the Sales Report section in the sidebar menu."
+      return "You can view sales data by navigating to the Sales Report section in the sidebar menu. This will show you detailed sales information for the current station."
     }
 
-    return "I'm currently experiencing technical difficulties connecting to my AI service. Please try again in a moment, or navigate through the system using the menu options available. I'll be back online shortly!"
+    if (lowerMessage.includes("admin")) {
+      return "You can access the admin dashboard from the home page. The admin section provides system-wide metrics and management capabilities across all stations."
+    }
+
+    return "I'm currently running in offline mode, but I can still help you navigate the NIPCO fuel station management system. Try asking me about specific features, navigation, or system capabilities!"
   }
 
   // Text-to-speech function
@@ -481,20 +520,52 @@ Respond naturally and helpfully, referencing the current context when appropriat
     }
   }
 
+  const getStatusColor = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return "bg-green-400"
+      case "config_error":
+        return "bg-orange-400"
+      case "disconnected":
+        return "bg-red-400"
+      default:
+        return "bg-yellow-400"
+    }
+  }
+
+  const getStatusText = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return "AI Online"
+      case "config_error":
+        return "Config Required"
+      case "disconnected":
+        return "AI Offline"
+      default:
+        return "Checking..."
+    }
+  }
+
+  const handleChatClick = () => {
+    router.push("/chat")
+  }
+
   return (
     <>
       {/* Floating Chat Button */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
           <Button
-            onClick={() => setIsOpen(true)}
+            onClick={handleChatClick}
             className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 px-6 py-4 backdrop-blur-sm border border-blue-400/20"
           >
             <div className="relative">
               <MessageCircle className="h-6 w-6" />
               <div className="absolute inset-0 rounded-full bg-blue-400 opacity-30 animate-ping"></div>
-              {connectionStatus === "disconnected" && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white"></div>
+              {connectionStatus !== "connected" && (
+                <div
+                  className={`absolute -top-1 -right-1 w-3 h-3 ${getStatusColor()} rounded-full border border-white`}
+                ></div>
               )}
             </div>
             <span className="font-semibold text-sm whitespace-nowrap">AI Assistant</span>
@@ -514,19 +585,23 @@ Respond naturally and helpfully, referencing the current context when appropriat
                     <h3 className="font-semibold">NIPCO AI Assistant</h3>
                     <div className="flex items-center gap-2 text-xs opacity-90">
                       <span>Context-aware • GPT-3.5 powered</span>
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          connectionStatus === "connected"
-                            ? "bg-green-400"
-                            : connectionStatus === "disconnected"
-                              ? "bg-red-400"
-                              : "bg-yellow-400"
-                        }`}
-                      ></div>
+                      <div className={`w-2 h-2 rounded-full ${getStatusColor()}`}></div>
+                      <span>{getStatusText()}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {connectionStatus === "config_error" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={checkApiHealth}
+                      className="text-white hover:bg-white/20"
+                      title="Check API configuration"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -549,6 +624,17 @@ Respond naturally and helpfully, referencing the current context when appropriat
             </CardHeader>
 
             <CardContent className="p-0 h-full flex flex-col">
+              {/* Configuration Status Banner */}
+              {connectionStatus === "config_error" && (
+                <div className="bg-orange-500/20 border-b border-orange-500/30 p-3 text-center">
+                  <div className="flex items-center justify-center gap-2 text-orange-400 text-xs">
+                    <Settings className="h-3 w-3" />
+                    <span>OpenAI API key configuration required</span>
+                  </div>
+                  {apiHealth && <p className="text-xs text-orange-300 mt-1">{apiHealth.message}</p>}
+                </div>
+              )}
+
               {/* Connection Status Banner */}
               {connectionStatus === "disconnected" && (
                 <div className="bg-red-500/20 border-b border-red-500/30 p-2 text-center">

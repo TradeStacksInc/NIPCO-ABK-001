@@ -1,12 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Fuel, Users, ChevronRight, MapPin, Clock, Crown } from "lucide-react"
+import { Fuel, Users, ChevronRight, MapPin, Clock, Crown, Mic } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SystemInfo } from "@/components/system-info"
+
+const useIndigenius = () => {
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window !== "undefined") {
+      // Check if script is already loaded
+      const existingScript = document.querySelector('script[src="https://widget.indigenius.ai/v1/index.js"]')
+
+      if (!existingScript) {
+        // Create and load the script
+        const script = document.createElement("script")
+        script.type = "module"
+        script.src = "https://widget.indigenius.ai/v1/index.js"
+        script.async = true
+
+        // Add script to head
+        document.head.appendChild(script)
+
+        // Optional: Add load event listener
+        script.onload = () => {
+          console.log("Indigenius chat widget script loaded successfully")
+        }
+
+        script.onerror = () => {
+          console.error("Failed to load Indigenius chat widget script")
+        }
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      // Remove script on component unmount if needed
+      const script = document.querySelector('script[src="https://widget.indigenius.ai/v1/index.js"]')
+      if (script) {
+        script.remove()
+      }
+    }
+  }, [])
+}
 
 const portalCards = [
   {
@@ -152,6 +191,8 @@ const fleetCard = {
 export default function HomePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState<string | null>(null)
+
+  useIndigenius()
 
   const handleCardClick = (card: any) => {
     if (!card.isActive) return
@@ -305,6 +346,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
       {/* Footer */}
       <footer className="mt-16 border-t border-gray-800/50 bg-gray-900/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -315,6 +357,39 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Floating Chat Widget */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 px-6 py-4 backdrop-blur-sm border border-blue-400/20 cursor-pointer group">
+          <div className="relative">
+            <Mic className="h-6 w-6" />
+            <div className="absolute inset-0 rounded-full bg-blue-400 opacity-30 animate-ping"></div>
+          </div>
+          <span className="font-semibold text-sm whitespace-nowrap">Ask Me Anything</span>
+
+          {/* Indigenius Chat Widget Component */}
+          <indigenius-convai
+            agent-id="6833aef40cf40bb4020c5df1"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              opacity: 0,
+              pointerEvents: "auto",
+            }}
+          ></indigenius-convai>
+        </div>
+
+        {/* Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+          <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap border border-gray-700">
+            Voice Assistant - Click to start
+            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

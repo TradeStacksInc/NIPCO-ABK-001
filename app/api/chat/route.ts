@@ -64,8 +64,10 @@ function validateApiKey(apiKey: string): boolean {
   // Check if it's a placeholder or invalid key
   if (
     apiKey.includes("your_ope") ||
+    apiKey.includes("your_actual") ||
     apiKey.includes("************") ||
     apiKey === "your_openai_api_key_here" ||
+    apiKey === "sk-your_actual_openai_api_key_here" ||
     apiKey.length < 20
   ) {
     return false
@@ -118,6 +120,14 @@ export async function POST(request: NextRequest) {
     // Check if API key exists
     const apiKey = process.env.OPENAI_API_KEY
 
+    console.log("🔑 API Key Debug Info:", {
+      hasApiKey: !!apiKey,
+      keyLength: apiKey?.length || 0,
+      keyPrefix: apiKey?.substring(0, 7) || "none",
+      keyEnding: apiKey?.substring(apiKey?.length - 4) || "none",
+      isPlaceholder: apiKey?.includes("your_") || apiKey?.includes("****"),
+    })
+
     if (!apiKey) {
       console.error("❌ OPENAI_API_KEY environment variable is not set")
       return NextResponse.json(
@@ -126,6 +136,7 @@ export async function POST(request: NextRequest) {
           code: "MISSING_API_KEY",
           message: "Please add your OpenAI API key to the environment variables",
           instructions: "Add OPENAI_API_KEY=your_actual_api_key to your environment variables",
+          debug: "Environment variable OPENAI_API_KEY is undefined",
         },
         { status: 500 },
       )
@@ -133,13 +144,23 @@ export async function POST(request: NextRequest) {
 
     // Validate API key format
     if (!validateApiKey(apiKey)) {
-      console.error("❌ Invalid OpenAI API key format detected")
+      console.error("❌ Invalid OpenAI API key format detected:", {
+        keyLength: apiKey.length,
+        keyPrefix: apiKey.substring(0, 10),
+        isPlaceholder: apiKey.includes("your_") || apiKey.includes("****"),
+      })
       return NextResponse.json(
         {
           error: "Invalid API key format",
           code: "INVALID_API_KEY",
           message: "The OpenAI API key appears to be invalid or is a placeholder",
           instructions: "Please ensure you have set a valid OpenAI API key that starts with 'sk-'",
+          debug: {
+            keyLength: apiKey.length,
+            keyPrefix: apiKey.substring(0, 10),
+            expectedFormat: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            isPlaceholder: apiKey.includes("your_") || apiKey.includes("****"),
+          },
         },
         { status: 500 },
       )

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Mic, MicOff, Send, X, MessageCircle, Volume2, VolumeX } from "lucide-react"
+import { Mic, MicOff, Send, X, MessageCircle, Volume2, VolumeX, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
@@ -13,6 +13,7 @@ interface Message {
   isUser: boolean
   timestamp: Date
   context?: any
+  error?: boolean
 }
 
 interface AppContext {
@@ -42,11 +43,34 @@ export function AIChatWidget() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("checking")
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const synthRef = useRef<SpeechSynthesis | null>(null)
   const contextRef = useRef<AppContext | null>(null)
+
+  // Check API health on component mount
+  useEffect(() => {
+    checkApiHealth()
+  }, [])
+
+  const checkApiHealth = async () => {
+    try {
+      setConnectionStatus("checking")
+      const response = await fetch("/api/chat", { method: "GET" })
+      if (response.ok) {
+        const data = await response.json()
+        setConnectionStatus(data.hasApiKey ? "connected" : "disconnected")
+        console.log("🔍 API Health Check:", data)
+      } else {
+        setConnectionStatus("disconnected")
+      }
+    } catch (error) {
+      console.error("❌ API Health Check failed:", error)
+      setConnectionStatus("disconnected")
+    }
+  }
 
   // Initialize speech recognition and synthesis
   useEffect(() => {
@@ -91,7 +115,7 @@ export function AIChatWidget() {
     }
   }, [])
 
-  // Gather comprehensive app context
+  // Gather comprehensive app context with size limits
   const gatherAppContext = useCallback((): AppContext => {
     const context: AppContext = {
       currentPage: typeof window !== "undefined" ? window.location.pathname : "",
@@ -104,12 +128,18 @@ export function AIChatWidget() {
     }
 
     if (typeof window !== "undefined") {
-      // Gather localStorage data
+      // Gather localStorage data (limited to prevent large payloads)
       try {
-        for (let i = 0; i < localStorage.length; i++) {
+        const localStorageKeys = []
+        for (let i = 0; i < Math.min(localStorage.length, 10); i++) {
           const key = localStorage.key(i)
-          if (key) {
-            context.localStorage[key] = localStorage.getItem(key)
+          if (key && key.length < 50) {
+            // Limit key length
+            const value = localStorage.getItem(key)
+            if (value && value.length < 200) {
+              // Limit value length
+              context.localStorage[key] = value
+            }
           }
         }
       } catch (e) {
@@ -138,8 +168,8 @@ export function AIChatWidget() {
         }
       }
 
-      // Gather visible UI components and user interactions
-      context.recentActions = getRecentUserActions()
+      // Gather recent actions (limited)
+      context.recentActions = getRecentUserActions().slice(0, 5)
     }
 
     contextRef.current = context
@@ -187,22 +217,30 @@ export function AIChatWidget() {
   })
 
   const getRecentUserActions = () => {
-    // Track recent user interactions (implement based on your app's needs)
     return ["Viewed dashboard", "Checked station status", "Opened chat"]
   }
 
-  // OpenAI API integration
+  // Enhanced OpenAI API integration with proper error handling
   const sendToOpenAI = async (userMessage: string, context: AppContext): Promise<string> => {
+    console.log("🚀 Sending message to OpenAI:", { userMessage: userMessage.slice(0, 100) + "..." })
+
     try {
-      const systemPrompt = `You are an intelligent AI assistant for the NIPCO Fuel Station Management System. You have complete awareness of the current application state and user context.
+      // Validate input
+      if (!userMessage || userMessage.trim().length === 0) {
+        throw new Error("Message cannot be empty")
+      }
+
+      if (userMessage.length > 2000) {
+        userMessage = userMessage.slice(0, 2000) + "..."
+      }
+
+      // Create system prompt with limited context
+      const systemPrompt = `You are an intelligent AI assistant for the NIPCO Fuel Station Management System. You have awareness of the current application state and user context.
 
 Current Context:
 - Page: ${context.currentPage}
-- Route: ${context.route}
-- App Data: ${JSON.stringify(context.appData, null, 2)}
-- User Session: ${JSON.stringify(context.localStorage, null, 2)}
+- App Data: ${JSON.stringify(context.appData).slice(0, 1000)}
 - Recent Actions: ${context.recentActions.join(", ")}
-- Timestamp: ${context.timestamp}
 
 You should provide helpful, contextual responses based on this information. Be specific about the current state when relevant. Help users navigate the system, understand data, and perform tasks efficiently.
 
@@ -213,38 +251,112 @@ User capabilities in this system:
 - Generate reports and analytics
 - Manage staff and operations
 
-Respond naturally and helpfully, referencing the current context when appropriate.`
+Respond naturally and helpfully, referencing the current context when appropriate. Keep responses concise and actionable.`
+
+      const requestPayload = {
+        messages: [
+          { role: "system" as const, content: systemPrompt },
+          { role: "user" as const, content: userMessage },
+        ],
+        context: {
+          page: context.currentPage,
+          timestamp: context.timestamp,
+        },
+      }
+
+      console.log("📤 Request payload prepared:", {
+        messageCount: requestPayload.messages.length,
+        systemPromptLength: systemPrompt.length,
+        userMessageLength: userMessage.length,
+      })
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage },
-          ],
-          context: context,
-        }),
+        body: JSON.stringify(requestPayload),
       })
 
+      console.log("📡 API response status:", response.status)
+
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`)
+        let errorData: any = {}
+        try {
+          errorData = await response.json()
+        } catch {
+          errorData = { error: "Failed to parse error response" }
+        }
+
+        console.error("❌ API request failed:", {
+          status: response.status,
+          error: errorData,
+        })
+
+        // Handle specific error types
+        if (response.status === 400) {
+          throw new Error(`Invalid request: ${errorData.message || errorData.error || "Bad request"}`)
+        } else if (response.status === 401) {
+          throw new Error("Authentication failed. Please check API key configuration.")
+        } else if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again in a moment.")
+        } else if (response.status >= 500) {
+          throw new Error(`Server error: ${errorData.message || errorData.error || "Internal server error"}`)
+        } else {
+          throw new Error(`Request failed with status ${response.status}`)
+        }
       }
 
       const data = await response.json()
-      return data.message || "I apologize, but I couldn't process your request at the moment."
+      console.log("✅ API response received:", {
+        hasMessage: !!data.message,
+        messageLength: data.message?.length || 0,
+        responseTime: data.responseTime,
+        usage: data.usage,
+      })
+
+      if (!data.message) {
+        throw new Error("No message content in response")
+      }
+
+      setConnectionStatus("connected")
+      return data.message
     } catch (error) {
-      console.error("OpenAI API Error:", error)
-      throw new Error("Failed to get AI response. Please check your connection and try again.")
+      console.error("❌ sendToOpenAI error:", error)
+      setConnectionStatus("disconnected")
+
+      // Return context-aware fallback response
+      const fallbackResponse = getFallbackResponse(context, userMessage)
+      return fallbackResponse
     }
+  }
+
+  // Enhanced fallback response function
+  const getFallbackResponse = (context: AppContext, userMessage: string): string => {
+    const lowerMessage = userMessage.toLowerCase()
+
+    if (lowerMessage.includes("station") || lowerMessage.includes("nipco")) {
+      if (context.currentPage.includes("/portal/")) {
+        const stationId = context.currentPage.split("/portal/")[1]
+        return `I'm currently offline, but I can see you're viewing the ${stationId.toUpperCase()} station portal. You can navigate using the sidebar to access Sales Report, Driver Offload, Tank Offload, Manage Staff, and System Log.`
+      }
+      return "I'm currently offline, but you can access your fuel stations from the home page. There are 5 active NIPCO stations available for management."
+    }
+
+    if (lowerMessage.includes("help") || lowerMessage.includes("how")) {
+      return "I'm currently offline, but you can navigate through the system using the sidebar menu. Key features include Dashboard, Sales Report, Driver/Tank Offload forms, Staff Management, and System Logs."
+    }
+
+    if (lowerMessage.includes("sales") || lowerMessage.includes("revenue")) {
+      return "I'm currently offline, but you can view sales data by navigating to the Sales Report section in the sidebar menu."
+    }
+
+    return "I'm currently experiencing technical difficulties connecting to my AI service. Please try again in a moment, or navigate through the system using the menu options available. I'll be back online shortly!"
   }
 
   // Text-to-speech function
   const speakText = (text: string) => {
     if (synthRef.current && voiceEnabled) {
-      // Cancel any ongoing speech
       synthRef.current.cancel()
 
       const utterance = new SpeechSynthesisUtterance(text)
@@ -294,7 +406,19 @@ Respond naturally and helpfully, referencing the current context when appropriat
         speakText(aiResponse)
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An unexpected error occurred")
+      console.error("❌ handleSendMessage error:", error)
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
+      setError(errorMessage)
+
+      // Add error message to chat
+      const errorChatMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        text: `Sorry, I encountered an error: ${errorMessage}`,
+        isUser: false,
+        timestamp: new Date(),
+        error: true,
+      }
+      setMessages((prev) => [...prev, errorChatMessage])
     } finally {
       setIsLoading(false)
     }
@@ -334,12 +458,10 @@ Respond naturally and helpfully, referencing the current context when appropriat
   // Real-time context monitoring
   useEffect(() => {
     const handleStorageChange = () => {
-      // Update context when localStorage changes
       gatherAppContext()
     }
 
     const handleLocationChange = () => {
-      // Update context when route changes
       gatherAppContext()
     }
 
@@ -371,6 +493,9 @@ Respond naturally and helpfully, referencing the current context when appropriat
             <div className="relative">
               <MessageCircle className="h-6 w-6" />
               <div className="absolute inset-0 rounded-full bg-blue-400 opacity-30 animate-ping"></div>
+              {connectionStatus === "disconnected" && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white"></div>
+              )}
             </div>
             <span className="font-semibold text-sm whitespace-nowrap">AI Assistant</span>
           </Button>
@@ -387,7 +512,18 @@ Respond naturally and helpfully, referencing the current context when appropriat
                   <MessageCircle className="h-5 w-5" />
                   <div>
                     <h3 className="font-semibold">NIPCO AI Assistant</h3>
-                    <p className="text-xs opacity-90">Context-aware • GPT-4 powered</p>
+                    <div className="flex items-center gap-2 text-xs opacity-90">
+                      <span>Context-aware • GPT-3.5 powered</span>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          connectionStatus === "connected"
+                            ? "bg-green-400"
+                            : connectionStatus === "disconnected"
+                              ? "bg-red-400"
+                              : "bg-yellow-400"
+                        }`}
+                      ></div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -413,13 +549,27 @@ Respond naturally and helpfully, referencing the current context when appropriat
             </CardHeader>
 
             <CardContent className="p-0 h-full flex flex-col">
+              {/* Connection Status Banner */}
+              {connectionStatus === "disconnected" && (
+                <div className="bg-red-500/20 border-b border-red-500/30 p-2 text-center">
+                  <div className="flex items-center justify-center gap-2 text-red-400 text-xs">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>AI service offline - using fallback responses</span>
+                  </div>
+                </div>
+              )}
+
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((message) => (
                   <div key={message.id} className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}>
                     <div
                       className={`max-w-[85%] p-3 rounded-lg ${
-                        message.isUser ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-100"
+                        message.isUser
+                          ? "bg-blue-500 text-white"
+                          : message.error
+                            ? "bg-red-500/20 border border-red-500/30 text-red-400"
+                            : "bg-gray-700 text-gray-100"
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.text}</p>
@@ -451,14 +601,6 @@ Respond naturally and helpfully, referencing the current context when appropriat
                   </div>
                 )}
 
-                {error && (
-                  <div className="flex justify-center">
-                    <div className="bg-red-500/20 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm">
-                      {error}
-                    </div>
-                  </div>
-                )}
-
                 <div ref={messagesEndRef} />
               </div>
 
@@ -474,6 +616,7 @@ Respond naturally and helpfully, referencing the current context when appropriat
                       className="w-full p-3 pr-12 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] max-h-32"
                       rows={1}
                       disabled={isLoading}
+                      maxLength={2000}
                     />
                   </div>
                   <Button
@@ -513,7 +656,9 @@ Respond naturally and helpfully, referencing the current context when appropriat
                       </span>
                     )}
                   </div>
-                  <span className="text-gray-500">Context: {contextRef.current?.currentPage || "Loading..."}</span>
+                  <span className="text-gray-500">
+                    {contextRef.current?.currentPage || "Loading..."} • {inputText.length}/2000
+                  </span>
                 </div>
               </div>
             </CardContent>

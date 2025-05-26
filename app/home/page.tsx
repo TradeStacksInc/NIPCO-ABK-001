@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SystemInfo } from "@/components/system-info"
-import { IndigeniusChatMock } from "@/components/indigenius-chat-mock"
+import { AIChatWidget } from "@/components/ai-chat-widget"
 
 const portalCards = [
   {
@@ -318,8 +318,8 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Indigenius Chat Widget */}
-      <IndigeniusChatMock />
+      {/* AI Chat Widget */}
+      <AIChatWidget />
     </div>
   )
 }
